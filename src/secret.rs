@@ -19,8 +19,8 @@ use curve25519_dalek::digest::Digest;
 use curve25519_dalek::edwards::CompressedEdwardsY;
 use curve25519_dalek::scalar::Scalar;
 
-use rand::CryptoRng;
-use rand::Rng;
+use rand_core::CryptoRng;
+use rand_core::RngCore;
 
 use sha2::Sha512;
 
@@ -174,7 +174,7 @@ impl SecretKey {
     /// A CSPRNG with a `fill_bytes()` method, e.g. `rand::OsRng`
     pub fn generate<T>(csprng: &mut T) -> SecretKey
     where
-        T: CryptoRng + Rng,
+        T: CryptoRng + RngCore,
     {
         let mut sk: SecretKey = SecretKey([0u8; 32]);
 

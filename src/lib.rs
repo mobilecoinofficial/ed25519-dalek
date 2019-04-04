@@ -242,6 +242,10 @@
 #![warn(rust_2018_compatibility)]
 #![warn(rust_2018_idioms)]
 #![deny(missing_docs)] // refuse to compile if documentation is missing
+#![cfg_attr(feature = "alloc", feature(alloc))]
+
+#[cfg(feature = "alloc")]
+extern crate alloc;
 
 #[cfg(any(feature = "std", test))]
 #[macro_use]
@@ -250,7 +254,7 @@ extern crate std;
 extern crate clear_on_drop;
 extern crate curve25519_dalek;
 extern crate failure;
-extern crate rand;
+extern crate rand_core;
 #[cfg(feature = "serde")]
 extern crate serde;
 extern crate sha2;

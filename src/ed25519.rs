@@ -11,8 +11,8 @@
 
 use core::default::Default;
 
-use rand::CryptoRng;
-use rand::Rng;
+use rand_core::CryptoRng;
+use rand_core::RngCore;
 
 #[cfg(feature = "serde")]
 use serde::de::Error as SerdeError;
@@ -42,10 +42,9 @@ pub use crate::signature::*;
 ///
 /// # Inputs
 ///
-/// * `messages` is a slice of byte slices, one per signed message.
 /// * `signatures` is a slice of `Signature`s.
 /// * `public_keys` is a slice of `PublicKey`s.
-/// * `csprng` is an implementation of `Rng + CryptoRng`, such as
+/// * `csprng` is an implementation of `RngCore + CryptoRng`, such as
 ///   `rand::rngs::ThreadRng`.
 ///
 /// # Panics
@@ -80,19 +79,20 @@ pub use crate::signature::*;
 /// let signatures:  Vec<Signature> = keypairs.iter().map(|key| key.sign(&msg)).collect();
 /// let public_keys: Vec<PublicKey> = keypairs.iter().map(|key| key.public).collect();
 ///
-/// let result = verify_batch(&messages[..], &signatures[..], &public_keys[..]);
+/// let result = verify_batch(&messages[..], &signatures[..], &public_keys[..], &mut csprng);
 /// assert!(result.is_ok());
 /// # }
 /// ```
 #[cfg(any(feature = "alloc", feature = "std"))]
 #[allow(non_snake_case)]
-pub fn verify_batch(
+pub fn verify_batch<R: RngCore + CryptoRng>(
     messages: &[&[u8]],
     signatures: &[Signature],
     public_keys: &[PublicKey],
+    csprng: &mut R,
 ) -> Result<(), SignatureError>
 {
-    const ASSERT_MESSAGE: &'static [u8] = b"The number of messages, signatures, and public keys must be equal.";
+    const ASSERT_MESSAGE: &'static str = "The number of messages, signatures, and public keys must be equal.";
     assert!(signatures.len()  == messages.len(),    ASSERT_MESSAGE);
     assert!(signatures.len()  == public_keys.len(), ASSERT_MESSAGE);
     assert!(public_keys.len() == messages.len(),    ASSERT_MESSAGE);
@@ -103,7 +103,6 @@ pub fn verify_batch(
     use std::vec::Vec;
 
     use core::iter::once;
-    use rand::thread_rng;
 
     use curve25519_dalek::traits::IsIdentity;
     use curve25519_dalek::traits::VartimeMultiscalarMul;
@@ -111,7 +110,11 @@ pub fn verify_batch(
     // Select a random 128-bit scalar for each signature.
     let zs: Vec<Scalar> = signatures
         .iter()
-        .map(|_| Scalar::from(thread_rng().gen::<u128>()))
+        .map(|_| {
+            let mut value = [0u8; 16];
+            csprng.fill_bytes(&mut value[..]);
+            Scalar::from(u128::from_ne_bytes(value))
+        })
         .collect();
 
     // Compute the basepoint coefficient, ∑ s[i]z[i] (mod l)
@@ -246,7 +249,7 @@ impl Keypair {
     /// Other suitable hash functions include Keccak-512 and Blake2b-512.
     pub fn generate<R>(csprng: &mut R) -> Keypair
     where
-        R: CryptoRng + Rng,
+        R: CryptoRng + RngCore,
     {
         let sk: SecretKey = SecretKey::generate(csprng);
         let pk: PublicKey = (&sk).into();

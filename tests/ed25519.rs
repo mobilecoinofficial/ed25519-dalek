@@ -197,7 +197,7 @@ mod integrations {
         }
         let public_keys: Vec<PublicKey> = keypairs.iter().map(|key| key.public).collect();
 
-        let result = verify_batch(&messages, &signatures[..], &public_keys[..]);
+        let result = verify_batch(&messages, &signatures[..], &public_keys[..], &mut csprng);
 
         assert!(result.is_ok());
     }
