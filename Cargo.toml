@@ -52,7 +52,7 @@ harness = false
 [features]
 default = ["std", "u64_backend"]
 std = ["curve25519-dalek/std", "sha2/std", "serde/std"]
-alloc = ["curve25519-dalek/alloc", "serde/alloc"]
+alloc = ["curve25519-dalek/alloc", "rand_core/alloc", "serde/alloc"]
 nightly = ["curve25519-dalek/nightly", "clear_on_drop/nightly"]
 asm = ["sha2/asm"]
 yolocrypto = ["curve25519-dalek/yolocrypto"]

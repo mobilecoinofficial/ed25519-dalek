@@ -99,7 +99,7 @@ pub fn verify_batch<R: RngCore + CryptoRng>(
  
     #[cfg(feature = "alloc")]
     use alloc::vec::Vec;
-    #[cfg(feature = "std")]
+    #[cfg(all(not(feature = "alloc"), feature = "std"))]
     use std::vec::Vec;
 
     use core::iter::once;
